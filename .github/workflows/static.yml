@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Revenue Ambition Chart</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #fafaf8;
+    --text: #1a1a1a;
+    --muted: #6b6b6b;
+    --border: #e0ddd8;
+    --dark: #3a3a3a;
+    --mid: #8a8a8a;
+    --light: #c8c8c4;
+    --lightest: #e8e6e2;
+    --accent: #1a1a1a;
+    --card-bg: #ffffff;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 40px 24px;
+  }
+
+  .container {
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+
+  h1 {
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 32px;
+  }
+
+  .main-title {
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 8px;
+    letter-spacing: -0.02em;
+    text-transform: none;
+  }
+
+  .subtitle {
+    font-size: 15px;
+    color: var(--muted);
+    margin-bottom: 40px;
+    font-weight: 400;
+  }
+
+  .layout {
+    display: grid;
+    grid-template-columns: 260px 1fr;
+    gap: 48px;
+    align-items: start;
+  }
+
+  /* Controls Panel */
+  .controls {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 28px 24px;
+    position: sticky;
+    top: 24px;
+  }
+
+  .controls h2 {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 24px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .input-group {
+    margin-bottom: 20px;
+  }
+
+  .input-group label {
+    display: block;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text);
+    margin-bottom: 6px;
+  }
+
+  .input-group .segment-dot {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 2px;
+    margin-right: 6px;
+    vertical-align: middle;
+    position: relative;
+    top: -1px;
+  }
+
+  .input-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .input-row input[type="range"] {
+    flex: 1;
+    -webkit-appearance: none;
+    appearance: none;
+    height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    outline: none;
+  }
+
+  .input-row input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: var(--accent);
+    cursor: pointer;
+    border: 3px solid var(--card-bg);
+    box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+  }
+
+  .input-row .value {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14px;
+    font-weight: 600;
+    min-width: 42px;
+    text-align: right;
+    color: var(--text);
+  }
+
+  .derived {
+    margin-top: 28px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border);
+  }
+
+  .derived-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+  }
+
+  .derived-row .label {
+    font-size: 13px;
+    color: var(--muted);
+    font-weight: 500;
+  }
+
+  .derived-row .val {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 15px;
+    font-weight: 600;
+  }
+
+  /* Chart Area */
+  .chart-area {
+    position: relative;
+  }
+
+  .chart-container {
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    gap: 100px;
+    padding: 60px 40px 0;
+    min-height: 480px;
+    position: relative;
+  }
+
+  /* CAGR arrow */
+  .cagr-arrow {
+    position: absolute;
+    top: 16px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .cagr-arrow .line {
+    width: 200px;
+    height: 1px;
+    background: var(--text);
+    position: relative;
+  }
+
+  .cagr-arrow .line::after {
+    content: '';
+    position: absolute;
+    right: -1px;
+    top: -4px;
+    border-left: 6px solid var(--text);
+    border-top: 4px solid transparent;
+    border-bottom: 4px solid transparent;
+  }
+
+  .cagr-arrow .badge {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14px;
+    font-weight: 600;
+    background: var(--text);
+    color: white;
+    padding: 4px 14px;
+    border-radius: 20px;
+    white-space: nowrap;
+  }
+
+  /* Bar columns */
+  .bar-column {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 200px;
+  }
+
+  .bar-total {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 8px;
+    color: var(--text);
+  }
+
+  .bar-stack {
+    width: 180px;
+    display: flex;
+    flex-direction: column;
+    border-radius: 4px 4px 0 0;
+    overflow: hidden;
+    transition: height 0.4s ease;
+  }
+
+  .bar-segment {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: height 0.4s ease;
+    min-height: 0;
+  }
+
+  .bar-segment .pct {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    font-weight: 600;
+    color: white;
+    opacity: 0.9;
+  }
+
+  .bar-segment.seg-fb { background: var(--dark); }
+  .bar-segment.seg-hc { background: var(--mid); }
+  .bar-segment.seg-intl { background: var(--light); }
+  .bar-segment.seg-intl .pct { color: var(--text); }
+
+  .bar-year {
+    font-size: 14px;
+    font-weight: 600;
+    margin-top: 12px;
+    color: var(--text);
+  }
+
+  .bar-year-sub {
+    font-size: 12px;
+    color: var(--muted);
+    font-weight: 400;
+  }
+
+  /* Legend on right */
+  .legend-area {
+    display: flex;
+    justify-content: center;
+    gap: 32px;
+    margin-top: 32px;
+    padding-top: 24px;
+    border-top: 1px solid var(--border);
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: var(--muted);
+    font-weight: 500;
+  }
+
+  .legend-item .dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 2px;
+  }
+
+  /* Margin metrics */
+  .margins {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-top: 32px;
+  }
+
+  .margin-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .margin-card .mc-label {
+    font-size: 13px;
+    color: var(--muted);
+    font-weight: 500;
+  }
+
+  .margin-card .mc-values {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .margin-card .mc-val {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 18px;
+    font-weight: 700;
+  }
+
+  .margin-card .mc-arrow {
+    font-size: 12px;
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 600;
+  }
+
+  .margin-card .mc-arrow .delta {
+    background: var(--text);
+    color: white;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 11px;
+  }
+
+  /* CAGR badges next to bars */
+  .cagr-labels {
+    position: absolute;
+    right: -20px;
+    top: 0;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  /* Right side CAGR table */
+  .cagr-table {
+    margin-top: 24px;
+    border-top: 1px solid var(--border);
+    padding-top: 20px;
+  }
+
+  .cagr-table-title {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 12px;
+  }
+
+  .cagr-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 0;
+  }
+
+  .cagr-row .cr-label {
+    font-size: 13px;
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .cagr-row .cr-val {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14px;
+    font-weight: 600;
+  }
+
+  @media (max-width: 800px) {
+    .layout {
+      grid-template-columns: 1fr;
+      gap: 24px;
+    }
+    .controls { position: static; }
+    .chart-container { gap: 60px; padding: 60px 20px 0; }
+    .bar-column { width: 140px; }
+    .bar-stack { width: 130px; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1 class="main-title">Revenue, USD Bn</h1>
+  <p class="subtitle">FY 2025 → FY 2035 Ambition — adjust segment CAGR to model scenarios</p>
+
+  <div class="layout">
+    <!-- Controls -->
+    <div class="controls">
+      <h2>Segment CAGR ('25–'35)</h2>
+
+      <div class="input-group">
+        <label><span class="segment-dot" style="background:var(--dark)"></span>Indonesia F&B</label>
+        <div class="input-row">
+          <input type="range" id="cagr-fb" min="0" max="25" step="0.5" value="8">
+          <span class="value" id="val-fb">8%</span>
+        </div>
+      </div>
+
+      <div class="input-group">
+        <label><span class="segment-dot" style="background:var(--mid)"></span>Indonesia Home Care</label>
+        <div class="input-row">
+          <input type="range" id="cagr-hc" min="0" max="40" step="0.5" value="22">
+          <span class="value" id="val-hc">22%</span>
+        </div>
+      </div>
+
+      <div class="input-group">
+        <label><span class="segment-dot" style="background:var(--light)"></span>International</label>
+        <div class="input-row">
+          <input type="range" id="cagr-intl" min="0" max="30" step="0.5" value="13">
+          <span class="value" id="val-intl">13%</span>
+        </div>
+      </div>
+
+      <div class="derived">
+        <div class="derived-row">
+          <span class="label">Total CAGR</span>
+          <span class="val" id="total-cagr">10%</span>
+        </div>
+        <div class="derived-row">
+          <span class="label">FY 2035 Revenue</span>
+          <span class="val" id="total-rev">~10.0 Bn</span>
+        </div>
+      </div>
+
+      <div class="cagr-table">
+        <div class="cagr-table-title">FY 2035 Breakdown</div>
+        <div class="cagr-row">
+          <span class="cr-label"><span class="segment-dot" style="background:var(--dark);width:8px;height:8px;display:inline-block;border-radius:2px"></span> Indonesia F&B</span>
+          <span class="cr-val" id="rev-fb-35">5.3 Bn</span>
+        </div>
+        <div class="cagr-row">
+          <span class="cr-label"><span class="segment-dot" style="background:var(--mid);width:8px;height:8px;display:inline-block;border-radius:2px"></span> Home Care</span>
+          <span class="cr-val" id="rev-hc-35">0.7 Bn</span>
+        </div>
+        <div class="cagr-row">
+          <span class="cr-label"><span class="segment-dot" style="background:var(--light);width:8px;height:8px;display:inline-block;border-radius:2px"></span> International</span>
+          <span class="cr-val" id="rev-intl-35">4.1 Bn</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Chart -->
+    <div class="chart-area">
+      <div class="chart-container">
+        <!-- CAGR Arrow -->
+        <div class="cagr-arrow">
+          <div class="badge" id="cagr-badge">10% CAGR</div>
+          <div class="line"></div>
+        </div>
+
+        <!-- FY 2025 Bar -->
+        <div class="bar-column">
+          <div class="bar-total">3.9</div>
+          <div class="bar-stack" id="bar-2025" style="height: 260px;">
+            <div class="bar-segment seg-intl" style="height: 32%; flex: none;">
+              <span class="pct">32%</span>
+            </div>
+            <div class="bar-segment seg-hc" style="height: 3%; flex: none;">
+              <span class="pct" style="font-size:10px">2%</span>
+            </div>
+            <div class="bar-segment seg-fb" style="height: 65%; flex: none;">
+              <span class="pct">65%</span>
+            </div>
+          </div>
+          <div class="bar-year">FY 2025</div>
+        </div>
+
+        <!-- FY 2035 Bar -->
+        <div class="bar-column">
+          <div class="bar-total" id="bar-2035-total">~10.0</div>
+          <div class="bar-stack" id="bar-2035" style="height: 260px;">
+            <div class="bar-segment seg-intl" id="seg-intl-35" style="height: 41%; flex: none;">
+              <span class="pct" id="pct-intl-35">41%</span>
+            </div>
+            <div class="bar-segment seg-hc" id="seg-hc-35" style="height: 7%; flex: none;">
+              <span class="pct" id="pct-hc-35">7%</span>
+            </div>
+            <div class="bar-segment seg-fb" id="seg-fb-35" style="height: 53%; flex: none;">
+              <span class="pct" id="pct-fb-35">53%</span>
+            </div>
+          </div>
+          <div class="bar-year">FY 2035</div>
+          <div class="bar-year-sub">Ambition</div>
+        </div>
+      </div>
+
+      <!-- Legend -->
+      <div class="legend-area">
+        <div class="legend-item"><div class="dot" style="background:var(--dark)"></div>Indonesia F&B</div>
+        <div class="legend-item"><div class="dot" style="background:var(--mid)"></div>Indonesia Home Care</div>
+        <div class="legend-item"><div class="dot" style="background:var(--light)"></div>International</div>
+      </div>
+
+      <!-- Margin cards -->
+      <div class="margins">
+        <div class="margin-card">
+          <div>
+            <div class="mc-label">Gross Margin</div>
+          </div>
+          <div class="mc-values">
+            <span class="mc-val">21%</span>
+            <span class="mc-arrow"><span class="delta">+9pt</span></span>
+            <span class="mc-val">30%</span>
+          </div>
+        </div>
+        <div class="margin-card">
+          <div>
+            <div class="mc-label">Profit Before Tax Margin</div>
+          </div>
+          <div class="mc-values">
+            <span class="mc-val">9%</span>
+            <span class="mc-arrow"><span class="delta">+6pt</span></span>
+            <span class="mc-val">15%</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // FY 2025 base figures (USD Bn)
+  const BASE_TOTAL = 3.9;
+  const BASE_FB = BASE_TOTAL * 0.65;    // 2.535
+  const BASE_HC = BASE_TOTAL * 0.02;    // 0.078  (using ~2% as shown, rest to make 3.9)
+  const BASE_INTL = BASE_TOTAL * 0.32;  // 1.248
+  // Slight adjustment: 65+2+32 = 99%, normalize
+  const fb25 = BASE_TOTAL * 0.6566;
+  const hc25 = BASE_TOTAL * 0.0202;
+  const intl25 = BASE_TOTAL * 0.3232;
+
+  const MAX_BAR_HEIGHT = 420;
+  const BASE_BAR_HEIGHT = 260;
+
+  const sliderFb = document.getElementById('cagr-fb');
+  const sliderHc = document.getElementById('cagr-hc');
+  const sliderIntl = document.getElementById('cagr-intl');
+
+  function update() {
+    const cagrFb = parseFloat(sliderFb.value) / 100;
+    const cagrHc = parseFloat(sliderHc.value) / 100;
+    const cagrIntl = parseFloat(sliderIntl.value) / 100;
+
+    // FY 2035 segment revenues
+    const fb35 = fb25 * Math.pow(1 + cagrFb, 10);
+    const hc35 = hc25 * Math.pow(1 + cagrHc, 10);
+    const intl35 = intl25 * Math.pow(1 + cagrIntl, 10);
+    const total35 = fb35 + hc35 + intl35;
+
+    // Total CAGR
+    const totalCagr = (Math.pow(total35 / BASE_TOTAL, 1/10) - 1) * 100;
+
+    // Percentages
+    const pctFb = (fb35 / total35 * 100);
+    const pctHc = (hc35 / total35 * 100);
+    const pctIntl = (intl35 / total35 * 100);
+
+    // Update slider labels
+    document.getElementById('val-fb').textContent = sliderFb.value + '%';
+    document.getElementById('val-hc').textContent = sliderHc.value + '%';
+    document.getElementById('val-intl').textContent = sliderIntl.value + '%';
+
+    // Update derived
+    document.getElementById('total-cagr').textContent = totalCagr.toFixed(1) + '%';
+    document.getElementById('total-rev').textContent = '~' + total35.toFixed(1) + ' Bn';
+
+    // Update CAGR badge
+    document.getElementById('cagr-badge').textContent = totalCagr.toFixed(1) + '% CAGR';
+
+    // Update bar 2035
+    const barScale = total35 / BASE_TOTAL;
+    const bar35Height = Math.min(BASE_BAR_HEIGHT * barScale, MAX_BAR_HEIGHT);
+    document.getElementById('bar-2035').style.height = bar35Height + 'px';
+
+    document.getElementById('bar-2035-total').textContent = '~' + total35.toFixed(1);
+
+    document.getElementById('seg-fb-35').style.height = pctFb.toFixed(1) + '%';
+    document.getElementById('seg-hc-35').style.height = pctHc.toFixed(1) + '%';
+    document.getElementById('seg-intl-35').style.height = pctIntl.toFixed(1) + '%';
+
+    document.getElementById('pct-fb-35').textContent = Math.round(pctFb) + '%';
+    document.getElementById('pct-hc-35').textContent = Math.round(pctHc) + '%';
+    document.getElementById('pct-intl-35').textContent = Math.round(pctIntl) + '%';
+
+    // Hide small percentage labels
+    document.getElementById('pct-hc-35').style.display = pctHc < 4 ? 'none' : '';
+    document.getElementById('pct-fb-35').style.fontSize = pctFb < 15 ? '10px' : '13px';
+    document.getElementById('pct-intl-35').style.fontSize = pctIntl < 15 ? '10px' : '13px';
+
+    // Update breakdown table
+    document.getElementById('rev-fb-35').textContent = fb35.toFixed(1) + ' Bn';
+    document.getElementById('rev-hc-35').textContent = hc35.toFixed(1) + ' Bn';
+    document.getElementById('rev-intl-35').textContent = intl35.toFixed(1) + ' Bn';
+  }
+
+  sliderFb.addEventListener('input', update);
+  sliderHc.addEventListener('input', update);
+  sliderIntl.addEventListener('input', update);
+
+  update();
+</script>
+</body>
+</html>
