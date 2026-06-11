@@ -1,0 +1,34 @@
+name: Daily Price Email
+
+on:
+  schedule:
+    # 23:00 UTC = 06:00 WIB (UTC+7) every day
+    - cron: '0 23 * * *'
+  workflow_dispatch:
+    inputs:
+      recipient_override:
+        description: 'Override recipient email (optional)'
+        required: false
+        default: ''
+
+jobs:
+  send-email:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install requests
+
+      - name: Send daily price email
+        env:
+          GMAIL_USER: ${{ secrets.GMAIL_USER }}
+          GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
+          RECIPIENT_EMAIL: ${{ inputs.recipient_override || 'soegeng.wibowo@gmail.com' }}
+        run: python scripts/daily_price_email.py
